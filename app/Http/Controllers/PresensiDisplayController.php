@@ -11,14 +11,22 @@ use Inertia\Inertia;
 
 class PresensiDisplayController extends Controller
 {
+    /**
+     * Tampilan Halaman Monitor Display QR
+     */
     public function index()
     {
         return Inertia::render('Display/PresensiQr');
     }
 
+    /**
+     * API: Generate Dynamic QR Token (Refresh tiap 20-30 detik)
+     */
     public function getQrToken()
     {
         $token = 'MORA-' . Str::random(32);
+        
+        // Simpan token ke cache selama 30 detik untuk toleransi pemindaian
         Cache::put('qr_token_' . $token, true, now()->addSeconds(30));
 
         return response()->json([
@@ -27,10 +35,13 @@ class PresensiDisplayController extends Controller
         ]);
     }
 
+    /**
+     * API: Ambil data kehadiran hari ini beserta ringkasan statistik
+     */
     public function getTodayAttendance()
     {
         $today = Carbon::today()->toDateString();
-        $jamBatasMasuk = Carbon::parse($today . ' 08:00:00');
+        $jamBatasMasuk = Carbon::parse($today . ' 08:00:00'); // Batas waktu jam masuk
 
         $attendances = Presensi::with('peserta')
             ->whereDate('tanggal', $today)
@@ -40,11 +51,11 @@ class PresensiDisplayController extends Controller
                 $statusWaktu = 'Tepat Waktu';
                 $isLate = false;
 
-                if ($item->jam_masuk) {
+                if (!empty($item->jam_masuk)) {
                     $jamAbsen = Carbon::parse($item->tanggal . ' ' . $item->jam_masuk);
                     if ($jamAbsen->gt($jamBatasMasuk)) {
                         $diffMinutes = $jamBatasMasuk->diffInMinutes($jamAbsen);
-                        $statusWaktu = "Terlambat {$diffMinutes} mnt";
+                        $statusWaktu = "Terlambat {$diffMinutes} menit";
                         $isLate = true;
                     }
                 }
@@ -54,14 +65,23 @@ class PresensiDisplayController extends Controller
                     'nama' => $item->peserta?->name ?? 'Peserta',
                     'nim_nis' => $item->peserta?->nim_nis ?? '-',
                     'jam_masuk' => $item->jam_masuk ? substr($item->jam_masuk, 0, 5) : '-',
+                    'jam_pulang' => $item->jam_pulang ? substr($item->jam_pulang, 0, 5) : '-',
                     'status_waktu' => $statusWaktu,
                     'is_late' => $isLate,
                 ];
             });
 
+        $totalHadir = $attendances->count();
+        $totalTerlambat = $attendances->where('is_late', true)->count();
+        $totalTepatWaktu = $totalHadir - $totalTerlambat;
+
         return response()->json([
             'data' => $attendances,
-            'total_hadir' => $attendances->count(),
+            'meta' => [
+                'total_hadir' => $totalHadir,
+                'tepat_waktu' => $totalTepatWaktu,
+                'terlambat'   => $totalTerlambat,
+            ]
         ]);
     }
 }

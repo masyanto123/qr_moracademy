@@ -3,6 +3,7 @@
 use App\Http\Controllers\PresensiDisplayController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\PresensiScanController;
 use Inertia\Inertia;
 
 // 1. HALAMAN UTAMA: Langsung menampilkan layar Monitor QR Presensi
@@ -22,5 +23,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
-
+Route::middleware('auth:sanctum')->group(function () {
+    // Route untuk scan presensi dari mobile app
+    Route::post('/presensi/scan', [PresensiScanController::class, 'scan']);
+});
 require __DIR__.'/auth.php';
