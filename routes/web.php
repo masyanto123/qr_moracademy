@@ -3,8 +3,6 @@
 use App\Http\Controllers\PresensiDisplayController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\PresensiScanController;
-use App\Http\Controllers\Api\CheckTodayController;
 use Inertia\Inertia;
 
 // 1. HALAMAN UTAMA: Langsung menampilkan layar Monitor QR Presensi
@@ -23,14 +21,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
-
-// 4. API PRESENSI MOBILE (dilindungi Sanctum — token dari moracademy valid karena shared DB)
-Route::middleware('auth:sanctum')->group(function () {
-    // Scan QR untuk presensi masuk/pulang
-    Route::post('/presensi/scan', [PresensiScanController::class, 'scan']);
-    // Cek status presensi hari ini
-    Route::get('/presensi/check-today', CheckTodayController::class);
 });
 
 require __DIR__.'/auth.php';
