@@ -54,8 +54,19 @@ class PresensiDisplayController extends Controller
                 if (!empty($item->jam_masuk)) {
                     $jamAbsen = Carbon::parse($item->tanggal . ' ' . $item->jam_masuk);
                     if ($jamAbsen->gt($jamBatasMasuk)) {
-                        $diffMinutes = $jamBatasMasuk->diffInMinutes($jamAbsen);
-                        $statusWaktu = "Terlambat {$diffMinutes} menit";
+                        $diffMinutes = (int) $jamBatasMasuk->diffInMinutes($jamAbsen);
+                        
+                        $hours = floor($diffMinutes / 60);
+                        $minutes = $diffMinutes % 60;
+
+                        if ($hours > 0) {
+                            $statusWaktu = $minutes > 0 
+                                ? "Terlambat {$hours} jam {$minutes} menit" 
+                                : "Terlambat {$hours} jam";
+                        } else {
+                            $statusWaktu = "Terlambat {$minutes} menit";
+                        }
+                        
                         $isLate = true;
                     }
                 }

@@ -155,12 +155,10 @@ export default function PresensiQr() {
                                             <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Masuk</span>
                                             <span className="text-sm font-mono font-bold text-slate-700">{item.jam_masuk}</span>
                                         </div>
-                                        {item.jam_pulang !== '-' && (
-                                            <div className="text-right">
-                                                <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Pulang</span>
-                                                <span className="text-sm font-mono font-bold text-slate-700">{item.jam_pulang}</span>
-                                            </div>
-                                        )}
+                                        <div className="text-right">
+                                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Pulang</span>
+                                            <span className="text-sm font-mono font-bold text-slate-700">{item.jam_pulang}</span>
+                                        </div>
                                         <div className="min-w-[100px] text-right ml-2">
                                             <span className={`text-[11px] font-bold px-3 py-1.5 rounded-full ${item.is_late ? "bg-rose-50 text-rose-600 border border-rose-100" : "bg-emerald-50 text-emerald-600 border border-emerald-100"}`}>
                                                 {item.status_waktu}
