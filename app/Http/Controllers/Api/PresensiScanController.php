@@ -60,10 +60,18 @@ class PresensiScanController extends Controller
             ], 404);
         }
 
-        // Cek riwayat lamaran yang berstatus 'aktif'
+        // Cek riwayat lamaran yang berstatus 'aktif' atau 'diterima'
+        // (sama dengan logika di MobileAuthController moracademy)
         $lamaranAktif = Lamaran::where('peserta_id', $peserta->id)
-            ->where('status', 'aktif')
+            ->whereIn('status', ['aktif', 'diterima'])
             ->first();
+
+        // Jika merupakan anggota tim, periksa juga status lamaran ketuanya
+        if (!$lamaranAktif && $peserta->ketua_id) {
+            $lamaranAktif = Lamaran::where('peserta_id', $peserta->ketua_id)
+                ->whereIn('status', ['aktif', 'diterima'])
+                ->first();
+        }
 
         if (!$lamaranAktif) {
             return response()->json([
@@ -74,8 +82,8 @@ class PresensiScanController extends Controller
 
         // 3. VALIDASI RADIUS AREA KANTOR (Geofencing)
         // Set koordinat kantor kamu di sini
-        $officeLat = -7.782819;   
-        $officeLng = 110.367082;  
+        $officeLat = -7.768033;   
+        $officeLng = 110.420059;  
         $maxRadius = 100; // Jarak maksimal dalam meter
 
         $distance = $this->getDistanceInMeters(
