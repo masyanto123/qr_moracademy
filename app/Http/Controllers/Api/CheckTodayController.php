@@ -29,6 +29,7 @@ class CheckTodayController extends Controller
 
         // Ambil jadwal default (jika ada), jika tidak gunakan fallback
         $jadwal = JadwalPresensi::where('is_default', true)->first();
+        $hasJadwal = $jadwal ? true : false;
         $jamMasukJadwal = $jadwal ? substr($jadwal->jam_masuk, 0, 5) : '08:00';
         $jamPulangJadwal = $jadwal ? substr($jadwal->jam_pulang, 0, 5) : '16:00';
         
@@ -49,6 +50,7 @@ class CheckTodayController extends Controller
                     'jam_masuk' => null,
                     'jam_pulang' => null,
                     'is_disabled_masuk' => $isDisabledMasuk,
+                    'has_jadwal' => $hasJadwal,
                     'jadwal_masuk' => $jamMasukJadwal,
                     'jadwal_pulang' => $jamPulangJadwal,
                 ],
@@ -73,6 +75,7 @@ class CheckTodayController extends Controller
                     ? substr($presensiHariIni->jam_pulang, 0, 5)
                     : null,
                 'is_disabled_masuk' => $isDisabledMasuk,
+                'has_jadwal' => $hasJadwal,
                 'jadwal_masuk' => $jamMasukJadwal,
                 'jadwal_pulang' => $jamPulangJadwal,
             ],
