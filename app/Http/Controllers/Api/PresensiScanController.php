@@ -110,6 +110,15 @@ class PresensiScanController extends Controller
 
         // SKENARIO A: Peserta sudah pernah absen hari ini
         if ($presensiHariIni) {
+
+            // Cek apakah status merupakan izin — blokir presensi jika sedang izin
+            $izinStatuses = ['sakit', 'izin pribadi', 'izin', 'lainnya'];
+            if (in_array(strtolower($presensiHariIni->status), $izinStatuses)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak dapat melakukan presensi karena sedang dalam status izin (' . $presensiHariIni->status . ').',
+                ], 422);
+            }
             
             // Cek apakah jam pulang sudah terisi
             if ($presensiHariIni->jam_pulang !== null) {

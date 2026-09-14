@@ -41,17 +41,25 @@ class CheckTodayController extends Controller
                 'data' => [
                     'has_masuk' => false,
                     'has_pulang' => false,
+                    'has_izin' => false,
+                    'status' => null,
                     'jam_masuk' => null,
                     'jam_pulang' => null,
                 ],
             ]);
         }
 
+        // Cek apakah status presensi merupakan izin (bukan 'hadir')
+        $izinStatuses = ['sakit', 'izin pribadi', 'izin', 'lainnya'];
+        $isIzin = in_array(strtolower($presensiHariIni->status), $izinStatuses);
+
         return response()->json([
             'success' => true,
             'data' => [
                 'has_masuk' => $presensiHariIni->jam_masuk !== null,
                 'has_pulang' => $presensiHariIni->jam_pulang !== null,
+                'has_izin' => $isIzin,
+                'status' => $presensiHariIni->status,
                 'jam_masuk' => $presensiHariIni->jam_masuk
                     ? substr($presensiHariIni->jam_masuk, 0, 5)
                     : null,
