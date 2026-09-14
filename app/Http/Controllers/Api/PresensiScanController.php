@@ -106,7 +106,16 @@ class PresensiScanController extends Controller
             ->whereDate('tanggal', $today)
             ->first();
 
+        // Ambil jadwal default (jika ada), jika tidak gunakan fallback
+        $jadwal = \App\Models\JadwalPresensi::where('is_default', true)->first();
+        $jamMasukJadwal = $jadwal ? substr($jadwal->jam_masuk, 0, 5) : '08:00';
+        
         $waktuSekarang = now()->format('H:i:s');
+        $waktuSekarangHi = now()->format('H:i');
+
+        // Menentukan status hadir atau terlambat (Jika lebih dari jam masuk)
+        $batasTerlambat = Carbon::createFromFormat('H:i', $jamMasukJadwal)->format('H:i');
+        $statusKehadiran = ($waktuSekarangHi > $batasTerlambat) ? 'terlambat' : 'hadir';
 
         // SKENARIO A: Peserta sudah pernah absen hari ini
         if ($presensiHariIni) {
@@ -152,7 +161,7 @@ class PresensiScanController extends Controller
             'peserta_id' => $peserta->id,
             'tanggal'    => $today,
             'jam_masuk'  => $waktuSekarang,
-            'status'     => 'hadir',
+            'status'     => $statusKehadiran,
             'lokasi'     => $request->latitude . ', ' . $request->longitude,
             'keterangan' => 'Presensi masuk via Mobile Scan'
         ]);

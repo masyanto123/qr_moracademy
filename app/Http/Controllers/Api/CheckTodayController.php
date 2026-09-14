@@ -4,20 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Presensi;
+use App\Models\JadwalPresensi;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class CheckTodayController extends Controller
 {
-    /**
-     * Cek status presensi hari ini untuk peserta yang sedang login
-     * 
-     * Response:
-     * - has_masuk: boolean (apakah sudah presensi masuk)
-     * - has_pulang: boolean (apakah sudah presensi pulang)
-     * - jam_masuk: string|null (jam masuk jika sudah presensi)
-     * - jam_pulang: string|null (jam pulang jika sudah presensi)
-     */
     public function __invoke(Request $request)
     {
         $user = $request->user();
@@ -35,6 +27,17 @@ class CheckTodayController extends Controller
             ->whereDate('tanggal', $today)
             ->first();
 
+        // Ambil jadwal default (jika ada), jika tidak gunakan fallback
+        $jadwal = JadwalPresensi::where('is_default', true)->first();
+        $jamMasukJadwal = $jadwal ? substr($jadwal->jam_masuk, 0, 5) : '08:00';
+        $jamPulangJadwal = $jadwal ? substr($jadwal->jam_pulang, 0, 5) : '16:00';
+        
+        $waktuSekarang = now()->format('H:i');
+        
+        // Logika disabled masuk: jika belum absen masuk dan sudah melewati/sama dengan jam pulang
+        $hasMasuk = $presensiHariIni && $presensiHariIni->jam_masuk !== null;
+        $isDisabledMasuk = !$hasMasuk && ($waktuSekarang >= $jamPulangJadwal);
+
         if (!$presensiHariIni) {
             return response()->json([
                 'success' => true,
@@ -45,6 +48,9 @@ class CheckTodayController extends Controller
                     'status' => null,
                     'jam_masuk' => null,
                     'jam_pulang' => null,
+                    'is_disabled_masuk' => $isDisabledMasuk,
+                    'jadwal_masuk' => $jamMasukJadwal,
+                    'jadwal_pulang' => $jamPulangJadwal,
                 ],
             ]);
         }
@@ -56,7 +62,7 @@ class CheckTodayController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'has_masuk' => $presensiHariIni->jam_masuk !== null,
+                'has_masuk' => $hasMasuk,
                 'has_pulang' => $presensiHariIni->jam_pulang !== null,
                 'has_izin' => $isIzin,
                 'status' => $presensiHariIni->status,
@@ -66,6 +72,9 @@ class CheckTodayController extends Controller
                 'jam_pulang' => $presensiHariIni->jam_pulang
                     ? substr($presensiHariIni->jam_pulang, 0, 5)
                     : null,
+                'is_disabled_masuk' => $isDisabledMasuk,
+                'jadwal_masuk' => $jamMasukJadwal,
+                'jadwal_pulang' => $jamPulangJadwal,
             ],
         ]);
     }
