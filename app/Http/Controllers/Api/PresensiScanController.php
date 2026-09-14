@@ -129,9 +129,15 @@ class PresensiScanController extends Controller
             }
 
             // Jika jam pulang masih kosong, lakukan UPDATE (Absen Pulang)
+            $keteranganBaru = $presensiHariIni->keterangan . ' | Presensi pulang via Mobile Scan';
+            
+            if ($request->has('alasan_pulang') && !empty(trim($request->alasan_pulang))) {
+                $keteranganBaru .= ' | Alasan Pulang Cepat: ' . trim($request->alasan_pulang);
+            }
+
             $presensiHariIni->update([
                 'jam_pulang' => $waktuSekarang,
-                'keterangan' => $presensiHariIni->keterangan . ' | Presensi pulang via Mobile Scan'
+                'keterangan' => $keteranganBaru
             ]);
 
             return response()->json([
