@@ -151,25 +151,25 @@ class PresensiScanController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Presensi PULANG berhasil dicatat pada pukul ' . $waktuSekarang,
+                'message' => 'Presensi pulang berhasil dicatat pada ' . $waktuSekarang,
                 'data'    => $presensiHariIni
             ], 200);
         }
 
-        // SKENARIO B: Peserta belum pernah absen hari ini, lakukan CREATE (Absen Masuk)
-        $presensi = Presensi::create([
+        // SKENARIO B: Peserta belum pernah absen hari ini -> Buat data baru (Absen Masuk)
+        $presensiBaru = \App\Models\Presensi::create([
             'peserta_id' => $peserta->id,
             'tanggal'    => $today,
             'jam_masuk'  => $waktuSekarang,
-            'status'     => $statusKehadiran,
+            'status'     => 'hadir', // DB Constraint hanya mengizinkan: hadir, izin, sakit, alpa
             'lokasi'     => $request->latitude . ', ' . $request->longitude,
-            'keterangan' => 'Presensi masuk via Mobile Scan'
+            'keterangan' => $keteranganMasuk
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Presensi MASUK berhasil dicatat pada pukul ' . $waktuSekarang,
-            'data'    => $presensi
+            'data'    => $presensiBaru
         ], 200);
     }
 }
