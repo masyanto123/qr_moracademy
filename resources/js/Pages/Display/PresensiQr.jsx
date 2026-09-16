@@ -69,7 +69,7 @@ export default function PresensiQr() {
     const izinAttendances = attendances.filter(item => ['izin', 'sakit'].includes(item.status?.toLowerCase()));
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-800 p-6 md:p-8 flex flex-col justify-between">
+        <div className="min-h-screen bg-slate-50 text-slate-800 p-6 md:p-8 flex flex-col justify-between overflow-x-hidden">
             {/* Header Jam & Tanggal */}
             <div className="flex flex-col md:flex-row justify-between items-center border-b border-slate-200 pb-5 mb-6 gap-4">
                 <div>
@@ -90,175 +90,160 @@ export default function PresensiQr() {
                 </div>
             </div>
 
-            {/* Statistik Ringkas */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-                    <div>
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Hadir</span>
-                        <p className="text-2xl font-black text-slate-800 mt-1">{stats.total_hadir ?? 0}</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center">
-                        <Users className="w-6 h-6 text-indigo-500" />
-                    </div>
-                </div>
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-                    <div>
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tepat Waktu</span>
-                        <p className="text-2xl font-black text-emerald-600 mt-1">{stats.tepat_waktu ?? 0}</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center">
-                        <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-                    </div>
-                </div>
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-                    <div>
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Terlambat</span>
-                        <p className="text-2xl font-black text-rose-600 mt-1">{stats.terlambat ?? 0}</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center">
-                        <AlertTriangle className="w-6 h-6 text-rose-500" />
-                    </div>
-                </div>
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-                    <div>
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Izin/Sakit</span>
-                        <p className="text-2xl font-black text-amber-600 mt-1">{stats.total_izin ?? 0}</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center">
-                        <AlertTriangle className="w-6 h-6 text-amber-500" />
-                    </div>
-                </div>
-            </div>
-
-            {/* Grid Konten */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 items-start">
+            {/* Grid Konten (4 Kolom Layout) */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 items-start">
                 
-                {/* Kolom Kiri: List Kehadiran Hari Ini */}
-                <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col h-[500px]">
-                    <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 shrink-0">
+                {/* Kolom Kiri: List Kehadiran Hari Ini (Lebar 2 Kolom) */}
+                <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col h-[600px]">
+                    <div className="flex justify-between items-center mb-5 pb-4 border-b border-slate-100 shrink-0">
                         <div className="flex items-center gap-2">
                             <Users className="w-5 h-5 text-indigo-600" />
-                            <h2 className="text-lg font-bold text-slate-800">Daftar Kehadiran & Izin Hari Ini</h2>
+                            <h2 className="text-lg font-bold text-slate-800">Daftar Kehadiran Hari Ini</h2>
                         </div>
-                        <span className="bg-slate-50 text-slate-500 font-medium px-3 py-1 rounded-full text-xs border border-slate-200">
+                        <span className="bg-slate-50 text-slate-500 font-medium px-3 py-1 rounded-full text-[10px] border border-slate-200">
                             Live Update (5s)
                         </span>
                     </div>
 
-                    <div className="overflow-y-auto flex-1 space-y-4 pr-2">
-                        {attendances.length === 0 ? (
+                    <div className="overflow-y-auto flex-1 space-y-3 pr-2">
+                        {hadirAttendances.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-slate-400">
-                                <Clock className="w-10 h-10 mb-3 text-slate-300 stroke-[1.5]" />
-                                <p className="text-sm font-medium">Belum ada data presensi atau izin hari ini.</p>
+                                <Clock className="w-10 h-10 mb-3 text-slate-200 stroke-[1.5]" />
+                                <p className="text-sm font-medium">Belum ada data presensi hari ini.</p>
                             </div>
                         ) : (
-                            <>
-                                {/* Section Hadir */}
-                                {hadirAttendances.length > 0 && (
-                                    <div>
-                                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Hadir ({hadirAttendances.length})</h3>
-                                        <div className="space-y-3">
-                                            {hadirAttendances.map((item) => (
-                                                <div key={item.id} className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/70 transition rounded-2xl border border-slate-100">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-11 h-11 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-base">
-                                                            {item.nama.charAt(0)}
-                                                        </div>
-                                                        <div>
-                                                            <h3 className="text-sm font-bold text-slate-800">{item.nama}</h3>
-                                                            <p className="text-xs text-slate-500 mt-0.5">NIM/NIS: {item.nim_nis}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-5">
-                                                        <div className="text-right">
-                                                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Masuk</span>
-                                                            <span className="text-sm font-mono font-bold text-slate-700">{item.jam_masuk}</span>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Pulang</span>
-                                                            <span className="text-sm font-mono font-bold text-slate-700">{item.jam_pulang}</span>
-                                                        </div>
-                                                        <div className="min-w-[100px] text-right ml-2">
-                                                            <span className={`text-[11px] font-bold px-3 py-1.5 rounded-full ${item.is_late ? "bg-rose-50 text-rose-600 border border-rose-100" : "bg-emerald-50 text-emerald-600 border border-emerald-100"}`}>
-                                                                {item.status_waktu}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
+                            hadirAttendances.map((item) => (
+                                <div key={item.id} className="flex items-center justify-between p-3.5 bg-slate-50 hover:bg-slate-100/70 transition rounded-2xl border border-slate-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm">
+                                            {item.nama.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-bold text-slate-800 line-clamp-1">{item.nama}</h3>
+                                            <p className="text-[11px] text-slate-500 mt-0.5">NIM/NIS: {item.nim_nis}</p>
                                         </div>
                                     </div>
-                                )}
-
-                                {/* Section Izin */}
-                                {izinAttendances.length > 0 && (
-                                    <div className="mt-6">
-                                        <h3 className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-2">Izin / Sakit ({izinAttendances.length})</h3>
-                                        <div className="space-y-3">
-                                            {izinAttendances.map((item) => (
-                                                <div key={item.id} className="flex items-center justify-between p-4 bg-amber-50/50 hover:bg-amber-50 transition rounded-2xl border border-amber-100">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-11 h-11 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-base">
-                                                            {item.nama.charAt(0)}
-                                                        </div>
-                                                        <div>
-                                                            <h3 className="text-sm font-bold text-slate-800">{item.nama}</h3>
-                                                            <p className="text-xs text-slate-500 mt-0.5">NIM/NIS: {item.nim_nis}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-5">
-                                                        <div className="text-right">
-                                                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Status</span>
-                                                            <span className="text-sm font-bold text-amber-700 capitalize">{item.status}</span>
-                                                        </div>
-                                                        <div className="min-w-[100px] text-right ml-2">
-                                                            <span className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200 truncate max-w-[150px] inline-block">
-                                                                {item.keterangan || "Tidak ada keterangan"}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-right hidden sm:block">
+                                            <span className="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Masuk</span>
+                                            <span className="text-xs font-mono font-bold text-slate-700">{item.jam_masuk}</span>
+                                        </div>
+                                        <div className="text-right hidden sm:block">
+                                            <span className="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Pulang</span>
+                                            <span className="text-xs font-mono font-bold text-slate-700">{item.jam_pulang}</span>
+                                        </div>
+                                        <div className="min-w-[90px] text-right ml-1">
+                                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${item.is_late ? "bg-rose-50 text-rose-600 border border-rose-100" : "bg-emerald-50 text-emerald-600 border border-emerald-100"}`}>
+                                                {item.status_waktu}
+                                            </span>
                                         </div>
                                     </div>
-                                )}
-                            </>
+                                </div>
+                            ))
                         )}
                     </div>
                 </div>
 
-                {/* Kolom Kanan: Box QR Code */}
-                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col items-center text-center">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full mb-4">
-                        Pindai Cepat
-                    </span>
-                    <h2 className="text-xl font-black text-slate-800 mb-1">Pindai QR Code</h2>
-                    <p className="text-xs text-slate-400 mb-6 font-medium">Arahkan kamera mobile ke kode di bawah</p>
-
-                    <div className="p-5 bg-white border-2 border-dashed border-indigo-200 rounded-3xl shadow-sm mb-5">
-                        {qrToken ? (
-                            <QRCodeSVG value={qrToken} size={220} level="M" includeMargin={true} />
-                        ) : (
-                            <div className="w-[220px] h-[220px] flex items-center justify-center text-slate-400 text-xs font-medium">
-                                Menyiapkan QR...
+                {/* Kolom Tengah: Statistik & Izin (Lebar 1 Kolom) */}
+                <div className="lg:col-span-1 flex flex-col gap-6 h-[600px]">
+                    {/* Kotak Statistik Ringkas */}
+                    <div className="bg-indigo-600 rounded-3xl p-5 shadow-sm text-white shrink-0 relative overflow-hidden">
+                        {/* Ornamen Latar */}
+                        <div className="absolute -right-6 -top-6 bg-indigo-500 w-24 h-24 rounded-full opacity-50 blur-xl"></div>
+                        <div className="absolute -left-6 -bottom-6 bg-indigo-700 w-24 h-24 rounded-full opacity-50 blur-xl"></div>
+                        
+                        <div className="grid grid-cols-2 gap-4 relative z-10">
+                            <div>
+                                <p className="text-[11px] text-indigo-200 font-medium mb-1.5 uppercase tracking-wide">Hadir</p>
+                                <h3 className="text-4xl font-black">{stats.total_hadir ?? 0}</h3>
+                                <p className="text-[10px] text-indigo-300 mt-1 font-medium">Peserta</p>
                             </div>
-                        )}
+                            <div>
+                                <p className="text-[11px] text-indigo-200 font-medium mb-1.5 uppercase tracking-wide">Izin/Sakit</p>
+                                <h3 className="text-4xl font-black">{stats.total_izin ?? 0}</h3>
+                                <p className="text-[10px] text-indigo-300 mt-1 font-medium">Peserta</p>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs text-slate-500 font-semibold bg-slate-50 px-4 py-2 rounded-full">
-                        <RefreshCw className="w-4 h-4 text-indigo-500 animate-spin" />
-                        <span>Berganti dalam: <strong className="text-indigo-600 text-sm ml-1">{countdown}s</strong></span>
+                    {/* Kotak Daftar Izin */}
+                    <div className="bg-amber-50 rounded-3xl p-5 shadow-sm border border-amber-100 flex-1 flex flex-col overflow-hidden">
+                        <div className="flex items-center gap-2 mb-4 shrink-0">
+                            <AlertTriangle className="w-4 h-4 text-amber-600" />
+                            <h3 className="text-sm font-bold text-amber-900">Daftar Izin & Sakit</h3>
+                        </div>
+                        <div className="overflow-y-auto space-y-3 flex-1 pr-1">
+                            {izinAttendances.length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center text-amber-400">
+                                    <p className="text-xs font-medium text-center px-4">Tidak ada peserta magang yang izin hari ini.</p>
+                                </div>
+                            ) : (
+                                izinAttendances.map((item) => (
+                                    <div key={item.id} className="flex flex-col p-3 bg-white rounded-2xl border border-amber-100 shadow-sm">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <h3 className="text-xs font-bold text-slate-800 line-clamp-1">{item.nama}</h3>
+                                            <span className="text-[9px] uppercase font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full shrink-0">
+                                                {item.status}
+                                            </span>
+                                        </div>
+                                        <p className="text-[10px] text-slate-500 leading-relaxed line-clamp-2">
+                                            {item.keterangan || "Tidak ada keterangan dari peserta."}
+                                        </p>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Kolom Kanan: Kotak QR Code & Info (Lebar 1 Kolom) */}
+                <div className="lg:col-span-1 flex flex-col gap-6 h-[600px]">
+                    <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 flex flex-col items-center text-center shrink-0">
+                        <span className="text-[9px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full mb-3">
+                            Pindai Cepat
+                        </span>
+                        <h2 className="text-lg font-black text-slate-800 mb-1">Pindai QR Code</h2>
+                        <p className="text-[11px] text-slate-400 mb-5 font-medium px-4">
+                            Arahkan kamera ke kode di bawah
+                        </p>
+
+                        <div className="p-4 bg-white border-2 border-dashed border-indigo-200 rounded-2xl shadow-sm mb-4">
+                            {qrToken ? (
+                                <QRCodeSVG value={qrToken} size={160} level="M" includeMargin={true} />
+                            ) : (
+                                <div className="w-[160px] h-[160px] flex items-center justify-center text-slate-400 text-xs font-medium">
+                                    Loading...
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-semibold bg-slate-50 px-3 py-1.5 rounded-full">
+                            <RefreshCw className="w-3.5 h-3.5 text-indigo-500 animate-spin" />
+                            <span>Update dalam: <strong className="text-indigo-600 text-xs ml-1">{countdown}s</strong></span>
+                        </div>
                     </div>
 
-                    <div className="w-full mt-6 pt-5 border-t border-slate-100 text-left space-y-3">
-                        <div className="flex items-center gap-2.5 text-xs text-slate-600 font-medium">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                            <span>Khusus Peserta Magang Aktif</span>
+                    <div className="bg-indigo-900 rounded-3xl p-5 shadow-sm text-white flex-1 relative overflow-hidden flex flex-col justify-center">
+                        <div className="absolute right-0 top-0 opacity-5">
+                            <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                         </div>
-                        <div className="flex items-center gap-2.5 text-xs text-slate-600 font-medium">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                            <span>Wajib Berada di Radius Kantor</span>
-                        </div>
+                        <h3 className="text-sm font-bold text-white mb-2 relative z-10 flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Syarat Presensi
+                        </h3>
+                        <ul className="text-[11px] text-indigo-200 space-y-2 relative z-10 font-medium">
+                            <li className="flex items-start gap-2">
+                                <div className="mt-0.5 w-1 h-1 rounded-full bg-emerald-400 shrink-0"></div>
+                                Pastikan GPS / Lokasi aktif di smartphone Anda.
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <div className="mt-0.5 w-1 h-1 rounded-full bg-emerald-400 shrink-0"></div>
+                                Anda harus berada dalam radius kantor.
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <div className="mt-0.5 w-1 h-1 rounded-full bg-emerald-400 shrink-0"></div>
+                                Kamera harus diberi izin akses pada aplikasi.
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
