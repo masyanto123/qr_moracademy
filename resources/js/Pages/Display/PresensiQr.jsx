@@ -124,15 +124,15 @@ export default function PresensiQr() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">
-                                        <div className="text-right hidden sm:block">
+                                        <div className="text-right hidden sm:block w-[40px]">
                                             <span className="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Masuk</span>
                                             <span className="text-xs font-mono font-bold text-slate-700">{item.jam_masuk}</span>
                                         </div>
-                                        <div className="text-right hidden sm:block">
+                                        <div className="text-right hidden sm:block w-[40px]">
                                             <span className="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Pulang</span>
                                             <span className="text-xs font-mono font-bold text-slate-700">{item.jam_pulang}</span>
                                         </div>
-                                        <div className="min-w-[90px] text-right ml-1">
+                                        <div className="w-[140px] text-right ml-1">
                                             <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${item.is_late ? "bg-rose-50 text-rose-600 border border-rose-100" : "bg-emerald-50 text-emerald-600 border border-emerald-100"}`}>
                                                 {item.status_waktu}
                                             </span>
