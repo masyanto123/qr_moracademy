@@ -64,6 +64,10 @@ export default function PresensiQr() {
         };
     }, []);
 
+    // Pisahkan data yang hadir dan izin
+    const hadirAttendances = attendances.filter(item => !['izin', 'sakit'].includes(item.status?.toLowerCase()));
+    const izinAttendances = attendances.filter(item => ['izin', 'sakit'].includes(item.status?.toLowerCase()));
+
     return (
         <div className="min-h-screen bg-slate-50 text-slate-800 p-6 md:p-8 flex flex-col justify-between">
             {/* Header Jam & Tanggal */}
@@ -87,11 +91,11 @@ export default function PresensiQr() {
             </div>
 
             {/* Statistik Ringkas */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
                     <div>
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Hadir</span>
-                        <p className="text-2xl font-black text-slate-800 mt-1">{stats.total_hadir}</p>
+                        <p className="text-2xl font-black text-slate-800 mt-1">{stats.total_hadir ?? 0}</p>
                     </div>
                     <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center">
                         <Users className="w-6 h-6 text-indigo-500" />
@@ -100,7 +104,7 @@ export default function PresensiQr() {
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
                     <div>
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tepat Waktu</span>
-                        <p className="text-2xl font-black text-emerald-600 mt-1">{stats.tepat_waktu}</p>
+                        <p className="text-2xl font-black text-emerald-600 mt-1">{stats.tepat_waktu ?? 0}</p>
                     </div>
                     <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center">
                         <CheckCircle2 className="w-6 h-6 text-emerald-500" />
@@ -109,10 +113,19 @@ export default function PresensiQr() {
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
                     <div>
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Terlambat</span>
-                        <p className="text-2xl font-black text-rose-600 mt-1">{stats.terlambat}</p>
+                        <p className="text-2xl font-black text-rose-600 mt-1">{stats.terlambat ?? 0}</p>
                     </div>
                     <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center">
                         <AlertTriangle className="w-6 h-6 text-rose-500" />
+                    </div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                    <div>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Izin/Sakit</span>
+                        <p className="text-2xl font-black text-amber-600 mt-1">{stats.total_izin ?? 0}</p>
+                    </div>
+                    <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center">
+                        <AlertTriangle className="w-6 h-6 text-amber-500" />
                     </div>
                 </div>
             </div>
@@ -122,51 +135,94 @@ export default function PresensiQr() {
                 
                 {/* Kolom Kiri: List Kehadiran Hari Ini */}
                 <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col h-[500px]">
-                    <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+                    <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 shrink-0">
                         <div className="flex items-center gap-2">
                             <Users className="w-5 h-5 text-indigo-600" />
-                            <h2 className="text-lg font-bold text-slate-800">Daftar Kehadiran Hari Ini</h2>
+                            <h2 className="text-lg font-bold text-slate-800">Daftar Kehadiran & Izin Hari Ini</h2>
                         </div>
                         <span className="bg-slate-50 text-slate-500 font-medium px-3 py-1 rounded-full text-xs border border-slate-200">
                             Live Update (5s)
                         </span>
                     </div>
 
-                    <div className="overflow-y-auto flex-1 space-y-3 pr-2">
+                    <div className="overflow-y-auto flex-1 space-y-4 pr-2">
                         {attendances.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-slate-400">
                                 <Clock className="w-10 h-10 mb-3 text-slate-300 stroke-[1.5]" />
-                                <p className="text-sm font-medium">Belum ada peserta yang presensi hari ini.</p>
+                                <p className="text-sm font-medium">Belum ada data presensi atau izin hari ini.</p>
                             </div>
                         ) : (
-                            attendances.map((item) => (
-                                <div key={item.id} className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/70 transition rounded-2xl border border-slate-100">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-11 h-11 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-base">
-                                            {item.nama.charAt(0)}
-                                        </div>
-                                        <div>
-                                            <h3 className="text-sm font-bold text-slate-800">{item.nama}</h3>
-                                            <p className="text-xs text-slate-500 mt-0.5">NIM/NIS: {item.nim_nis}</p>
+                            <>
+                                {/* Section Hadir */}
+                                {hadirAttendances.length > 0 && (
+                                    <div>
+                                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Hadir ({hadirAttendances.length})</h3>
+                                        <div className="space-y-3">
+                                            {hadirAttendances.map((item) => (
+                                                <div key={item.id} className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/70 transition rounded-2xl border border-slate-100">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-11 h-11 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-base">
+                                                            {item.nama.charAt(0)}
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="text-sm font-bold text-slate-800">{item.nama}</h3>
+                                                            <p className="text-xs text-slate-500 mt-0.5">NIM/NIS: {item.nim_nis}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-5">
+                                                        <div className="text-right">
+                                                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Masuk</span>
+                                                            <span className="text-sm font-mono font-bold text-slate-700">{item.jam_masuk}</span>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Pulang</span>
+                                                            <span className="text-sm font-mono font-bold text-slate-700">{item.jam_pulang}</span>
+                                                        </div>
+                                                        <div className="min-w-[100px] text-right ml-2">
+                                                            <span className={`text-[11px] font-bold px-3 py-1.5 rounded-full ${item.is_late ? "bg-rose-50 text-rose-600 border border-rose-100" : "bg-emerald-50 text-emerald-600 border border-emerald-100"}`}>
+                                                                {item.status_waktu}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-5">
-                                        <div className="text-right">
-                                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Masuk</span>
-                                            <span className="text-sm font-mono font-bold text-slate-700">{item.jam_masuk}</span>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Pulang</span>
-                                            <span className="text-sm font-mono font-bold text-slate-700">{item.jam_pulang}</span>
-                                        </div>
-                                        <div className="min-w-[100px] text-right ml-2">
-                                            <span className={`text-[11px] font-bold px-3 py-1.5 rounded-full ${item.is_late ? "bg-rose-50 text-rose-600 border border-rose-100" : "bg-emerald-50 text-emerald-600 border border-emerald-100"}`}>
-                                                {item.status_waktu}
-                                            </span>
+                                )}
+
+                                {/* Section Izin */}
+                                {izinAttendances.length > 0 && (
+                                    <div className="mt-6">
+                                        <h3 className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-2">Izin / Sakit ({izinAttendances.length})</h3>
+                                        <div className="space-y-3">
+                                            {izinAttendances.map((item) => (
+                                                <div key={item.id} className="flex items-center justify-between p-4 bg-amber-50/50 hover:bg-amber-50 transition rounded-2xl border border-amber-100">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-11 h-11 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-base">
+                                                            {item.nama.charAt(0)}
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="text-sm font-bold text-slate-800">{item.nama}</h3>
+                                                            <p className="text-xs text-slate-500 mt-0.5">NIM/NIS: {item.nim_nis}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-5">
+                                                        <div className="text-right">
+                                                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Status</span>
+                                                            <span className="text-sm font-bold text-amber-700 capitalize">{item.status}</span>
+                                                        </div>
+                                                        <div className="min-w-[100px] text-right ml-2">
+                                                            <span className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200 truncate max-w-[150px] inline-block">
+                                                                {item.keterangan || "Tidak ada keterangan"}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
-                                </div>
-                            ))
+                                )}
+                            </>
                         )}
                     </div>
                 </div>

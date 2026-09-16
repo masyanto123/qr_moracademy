@@ -79,12 +79,15 @@ class PresensiDisplayController extends Controller
                     'jam_pulang' => $item->jam_pulang ? substr($item->jam_pulang, 0, 5) : '-',
                     'status_waktu' => $statusWaktu,
                     'is_late' => $isLate,
+                    'status' => $item->status ?? 'hadir',
+                    'keterangan' => $item->keterangan ?? '-',
                 ];
             });
 
-        $totalHadir = $attendances->count();
-        $totalTerlambat = $attendances->where('is_late', true)->count();
+        $totalTerlambat = $attendances->where('is_late', true)->whereIn('status', ['hadir', null])->count();
+        $totalHadir = $attendances->whereIn('status', ['hadir', null])->count();
         $totalTepatWaktu = $totalHadir - $totalTerlambat;
+        $totalIzin = $attendances->whereIn('status', ['izin', 'sakit'])->count();
 
         return response()->json([
             'data' => $attendances,
@@ -92,6 +95,7 @@ class PresensiDisplayController extends Controller
                 'total_hadir' => $totalHadir,
                 'tepat_waktu' => $totalTepatWaktu,
                 'terlambat'   => $totalTerlambat,
+                'total_izin'  => $totalIzin,
             ]
         ]);
     }
