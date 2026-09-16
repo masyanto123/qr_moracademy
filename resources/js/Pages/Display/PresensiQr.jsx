@@ -180,15 +180,12 @@ export default function PresensiQr() {
                             ) : (
                                 izinAttendances.map((item) => (
                                     <div key={item.id} className="flex flex-col p-3 bg-white rounded-2xl border border-amber-100 shadow-sm">
-                                        <div className="flex justify-between items-start mb-2">
+                                        <div className="flex justify-between items-center">
                                             <h3 className="text-xs font-bold text-slate-800 line-clamp-1">{item.nama}</h3>
                                             <span className="text-[9px] uppercase font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full shrink-0">
-                                                {item.status}
+                                                Izin
                                             </span>
                                         </div>
-                                        <p className="text-[10px] text-slate-500 leading-relaxed line-clamp-2">
-                                            {item.keterangan || "Tidak ada keterangan dari peserta."}
-                                        </p>
                                     </div>
                                 ))
                             )}
