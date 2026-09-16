@@ -159,7 +159,7 @@ export default function PresensiQr() {
                                 <p className="text-[10px] text-indigo-300 mt-1 font-medium">Peserta</p>
                             </div>
                             <div>
-                                <p className="text-[11px] text-indigo-200 font-medium mb-1.5 uppercase tracking-wide">Izin/Sakit</p>
+                                <p className="text-[11px] text-indigo-200 font-medium mb-1.5 uppercase tracking-wide">Izin</p>
                                 <h3 className="text-4xl font-black">{stats.total_izin ?? 0}</h3>
                                 <p className="text-[10px] text-indigo-300 mt-1 font-medium">Peserta</p>
                             </div>
@@ -170,7 +170,7 @@ export default function PresensiQr() {
                     <div className="bg-amber-50 rounded-3xl p-5 shadow-sm border border-amber-100 flex-1 flex flex-col overflow-hidden">
                         <div className="flex items-center gap-2 mb-4 shrink-0">
                             <AlertTriangle className="w-4 h-4 text-amber-600" />
-                            <h3 className="text-sm font-bold text-amber-900">Daftar Izin & Sakit</h3>
+                            <h3 className="text-sm font-bold text-amber-900">Daftar Izin</h3>
                         </div>
                         <div className="overflow-y-auto space-y-3 flex-1 pr-1">
                             {izinAttendances.length === 0 ? (
