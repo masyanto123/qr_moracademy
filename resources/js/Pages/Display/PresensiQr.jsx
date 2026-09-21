@@ -100,9 +100,6 @@ export default function PresensiQr() {
                             <Users className="w-5 h-5 text-indigo-600" />
                             <h2 className="text-lg font-bold text-slate-800">Daftar Kehadiran Hari Ini</h2>
                         </div>
-                        <span className="bg-slate-50 text-slate-500 font-medium px-3 py-1 rounded-full text-[10px] border border-slate-200">
-                            Live Update (5s)
-                        </span>
                     </div>
 
                     <div className="overflow-y-auto flex-1 space-y-3 pr-2">
