@@ -102,19 +102,38 @@ class PresensiScanController extends Controller
 
         // 4. LOGIKA ABSEN MASUK & PULANG
         $today = Carbon::today()->toDateString();
-        // Ambil jadwal default
-        $jadwal = \App\Models\JadwalPresensi::where('is_default', true)->first();
+        
+        // Ambil ID perusahaan tempat peserta magang
+        $perusahaan_id = $lamaranAktif->lowongan->perusahaan_id ?? null;
+
+        // Ambil jadwal default untuk perusahaan tersebut
+        if ($perusahaan_id) {
+            $jadwal = \App\Models\JadwalPresensi::where('perusahaan_id', $perusahaan_id)
+                        ->where('is_default', true)
+                        ->first();
+        } else {
+            $jadwal = \App\Models\JadwalPresensi::where('is_default', true)->first();
+        }
         
         if (!$jadwal) {
             return response()->json([
                 'success' => false,
-                'message' => 'Tidak ada jadwal presensi aktif hari ini.'
+                'message' => 'Tidak ada jadwal presensi aktif hari ini untuk perusahaan Anda.'
             ], 400);
         }
 
         $jamMasukJadwal = substr($jadwal->jam_masuk, 0, 5);
         $waktuSekarang = now()->format('H:i:s');
         $waktuSekarangHi = now()->format('H:i');
+
+        // Validasi: Tolak presensi jika terlalu awal (maksimal 2 jam sebelum jam masuk)
+        $waktuBukaAbsen = Carbon::createFromFormat('H:i', $jamMasukJadwal)->subHours(2)->format('H:i');
+        if ($waktuSekarangHi < $waktuBukaAbsen) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda belum bisa melakukan presensi. Presensi untuk shift ini ('.$jamMasukJadwal.') baru dibuka mulai pukul '.$waktuBukaAbsen.'.'
+            ], 422);
+        }
 
         // Menentukan apakah terlambat atau tidak
         $batasTerlambat = Carbon::createFromFormat('H:i', $jamMasukJadwal)->format('H:i');
