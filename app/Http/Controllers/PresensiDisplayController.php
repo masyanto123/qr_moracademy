@@ -19,15 +19,12 @@ class PresensiDisplayController extends Controller
         return Inertia::render('Display/PresensiQr');
     }
 
-    /**
-     * API: Generate Dynamic QR Token (Refresh tiap 20-30 detik)
-     */
     public function getQrToken()
     {
         $token = 'MORA-' . Str::random(32);
         
-        // Simpan token ke cache selama 30 detik untuk toleransi pemindaian
-        Cache::put('qr_token_' . $token, true, now()->addSeconds(30));
+        // Simpan token ke cache selama 60 detik untuk toleransi pemindaian dan pencarian GPS
+        Cache::put('qr_token_' . $token, true, now()->addSeconds(60));
 
         return response()->json([
             'token' => $token,
