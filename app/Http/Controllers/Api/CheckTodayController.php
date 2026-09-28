@@ -27,8 +27,28 @@ class CheckTodayController extends Controller
             ->whereDate('tanggal', $today)
             ->first();
 
-        // Ambil jadwal default (jika ada), jika tidak gunakan fallback
-        $jadwal = JadwalPresensi::where('is_default', true)->first();
+        // Cari data perusahaan peserta dari lamaran aktif
+        $lamaranAktif = \App\Models\Lamaran::where('peserta_id', $peserta->id)
+            ->whereIn('status', ['aktif', 'diterima'])
+            ->first();
+            
+        if (!$lamaranAktif && $peserta->ketua_id) {
+            $lamaranAktif = \App\Models\Lamaran::where('peserta_id', $peserta->ketua_id)
+                ->whereIn('status', ['aktif', 'diterima'])
+                ->first();
+        }
+
+        $perusahaan_id = $lamaranAktif->lowongan->perusahaan_id ?? null;
+
+        // Ambil jadwal default berdasarkan perusahaan
+        if ($perusahaan_id) {
+            $jadwal = JadwalPresensi::where('perusahaan_id', $perusahaan_id)
+                        ->where('is_default', true)
+                        ->first();
+        } else {
+            $jadwal = JadwalPresensi::where('is_default', true)->first();
+        }
+
         $hasJadwal = $jadwal ? true : false;
         $jamMasukJadwal = $jadwal ? substr($jadwal->jam_masuk, 0, 5) : '08:00';
         $jamPulangJadwal = $jadwal ? substr($jadwal->jam_pulang, 0, 5) : '16:00';
