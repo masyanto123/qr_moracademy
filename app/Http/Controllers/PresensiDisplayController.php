@@ -8,6 +8,8 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 use Inertia\Inertia;
+use App\Models\Lamaran;
+use App\Models\JadwalPresensi;
 
 class PresensiDisplayController extends Controller
 {
@@ -41,13 +43,40 @@ class PresensiDisplayController extends Controller
     public function getTodayAttendance()
     {
         $today = Carbon::today()->toDateString();
-        $jamBatasMasuk = Carbon::parse($today . ' 08:00:00'); // Batas waktu jam masuk
-
-        $attendances = Presensi::with('peserta')
+        $attendances = Presensi::with(['peserta.riwayatLamaran' => function($q) {
+            $q->whereIn('status', ['aktif', 'diterima']);
+        }])
             ->whereDate('tanggal', $today)
             ->orderBy('jam_masuk', 'desc')
             ->get()
-            ->map(function ($item) use ($jamBatasMasuk) {
+            ->map(function ($item) use ($today) {
+                // 1. Tentukan Jadwal Presensi Dinamis
+                $perusahaan_id = null;
+                $lamaranAktif = $item->peserta?->riwayatLamaran?->first();
+                
+                // Jika tidak punya lamaran aktif, coba cek lamaran ketua timnya
+                if (!$lamaranAktif && $item->peserta?->ketua_id) {
+                    $lamaranAktif = Lamaran::where('peserta_id', $item->peserta->ketua_id)
+                        ->whereIn('status', ['aktif', 'diterima'])
+                        ->first();
+                }
+
+                if ($lamaranAktif) {
+                    $perusahaan_id = $lamaranAktif->perusahaan_id; // Menggunakan kolom langsung jika ada
+                }
+
+                if ($perusahaan_id) {
+                    $jadwal = JadwalPresensi::where('perusahaan_id', $perusahaan_id)
+                                ->where('is_default', true)
+                                ->first();
+                } else {
+                    $jadwal = JadwalPresensi::where('is_default', true)->first();
+                }
+
+                $jamMasukJadwal = $jadwal ? substr($jadwal->jam_masuk, 0, 8) : '08:00:00';
+                $jamBatasMasuk = Carbon::parse($today . ' ' . $jamMasukJadwal);
+
+                // 2. Hitung Keterlambatan
                 $statusWaktu = 'Tepat Waktu';
                 $isLate = false;
 
