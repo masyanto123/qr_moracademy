@@ -20,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         //
+        $middleware->preventRequestsDuringMaintenance(except: [
+            'api/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
