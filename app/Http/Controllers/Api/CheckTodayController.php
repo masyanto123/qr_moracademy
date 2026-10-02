@@ -38,26 +38,25 @@ class CheckTodayController extends Controller
                 ->first();
         }
 
-        $perusahaan_id = $lamaranAktif->lowongan->perusahaan_id ?? null;
+        $perusahaan_id = $lamaranAktif->perusahaan_id ?? $lamaranAktif->lowongan->perusahaan_id ?? null;
 
         // Ambil jadwal default berdasarkan perusahaan
+        $jadwal = null;
         if ($perusahaan_id) {
             $jadwal = JadwalPresensi::where('perusahaan_id', $perusahaan_id)
                         ->where('is_default', true)
                         ->first();
-        } else {
-            $jadwal = JadwalPresensi::where('is_default', true)->first();
         }
 
         $hasJadwal = $jadwal ? true : false;
-        $jamMasukJadwal = $jadwal ? substr($jadwal->jam_masuk, 0, 5) : '08:00';
-        $jamPulangJadwal = $jadwal ? substr($jadwal->jam_pulang, 0, 5) : '16:00';
+        $jamMasukJadwal = $jadwal ? substr($jadwal->jam_masuk, 0, 5) : null;
+        $jamPulangJadwal = $jadwal ? substr($jadwal->jam_pulang, 0, 5) : null;
         
         $waktuSekarang = now()->format('H:i');
         
-        // Logika disabled masuk: jika belum absen masuk dan sudah melewati/sama dengan jam pulang
+        // Logika disabled masuk: jika belum absen masuk dan sudah melewati/sama dengan jam pulang, atau jika TIDAK ADA jadwal
         $hasMasuk = $presensiHariIni && $presensiHariIni->jam_masuk !== null;
-        $isDisabledMasuk = !$hasMasuk && ($waktuSekarang >= $jamPulangJadwal);
+        $isDisabledMasuk = !$hasJadwal || (!$hasMasuk && $jamPulangJadwal && $waktuSekarang >= $jamPulangJadwal);
 
         if (!$presensiHariIni) {
             return response()->json([
