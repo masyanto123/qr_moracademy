@@ -94,7 +94,7 @@ export default function PresensiQr() {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 items-start">
                 
                 {/* Kolom Kiri: List Kehadiran Hari Ini (Lebar 2 Kolom) */}
-                <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col h-[600px]">
+                <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col h-auto lg:h-[600px] min-h-[400px] order-2 lg:order-1">
                     <div className="flex justify-between items-center mb-5 pb-4 border-b border-slate-100 shrink-0">
                         <div className="flex items-center gap-2">
                             <Users className="w-5 h-5 text-indigo-600" />
@@ -142,7 +142,7 @@ export default function PresensiQr() {
                 </div>
 
                 {/* Kolom Tengah: Statistik & Izin (Lebar 1 Kolom) */}
-                <div className="lg:col-span-1 flex flex-col gap-6 h-[600px]">
+                <div className="lg:col-span-1 flex flex-col gap-6 h-auto lg:h-[600px] order-3 lg:order-2">
                     {/* Kotak Statistik Ringkas */}
                     <div className="bg-indigo-600 rounded-3xl p-5 shadow-sm text-white shrink-0 relative overflow-hidden">
                         {/* Ornamen Latar */}
@@ -164,7 +164,7 @@ export default function PresensiQr() {
                     </div>
 
                     {/* Kotak Daftar Izin */}
-                    <div className="bg-amber-50 rounded-3xl p-5 shadow-sm border border-amber-100 flex-1 flex flex-col overflow-hidden">
+                    <div className="bg-amber-50 rounded-3xl p-5 shadow-sm border border-amber-100 flex-1 flex flex-col overflow-hidden min-h-[300px]">
                         <div className="flex items-center gap-2 mb-4 shrink-0">
                             <AlertTriangle className="w-4 h-4 text-amber-600" />
                             <h3 className="text-sm font-bold text-amber-900">Daftar Izin</h3>
@@ -191,7 +191,7 @@ export default function PresensiQr() {
                 </div>
 
                 {/* Kolom Kanan: Kotak QR Code & Info (Lebar 1 Kolom) */}
-                <div className="lg:col-span-1 flex flex-col gap-6 h-[600px]">
+                <div className="lg:col-span-1 flex flex-col gap-6 h-auto lg:h-[600px] order-1 lg:order-3">
                     <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 flex flex-col items-center text-center shrink-0">
                         <span className="text-[9px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full mb-3">
                             Pindai Cepat
