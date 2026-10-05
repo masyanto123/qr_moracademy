@@ -10,22 +10,34 @@ use Carbon\Carbon;
 use Inertia\Inertia;
 use App\Models\Lamaran;
 use App\Models\JadwalPresensi;
+use Illuminate\Support\Facades\DB;
 
 class PresensiDisplayController extends Controller
 {
     /**
      * Tampilan Halaman Monitor Display QR
      */
-    public function index()
+    public function index($qr_token)
     {
-        return Inertia::render('Display/PresensiQr');
+        $perusahaan = DB::table('perusahaans')->where('qr_token', $qr_token)->first();
+        if (!$perusahaan) {
+            abort(404, 'Layar QR tidak ditemukan atau token tidak valid.');
+        }
+
+        return Inertia::render('Display/PresensiQr', [
+            'qrToken' => $qr_token,
+            'companyName' => $perusahaan->name
+        ]);
     }
 
     /**
      * API: Generate Dynamic QR Token (Refresh tiap 20-30 detik)
      */
-    public function getQrToken()
+    public function getQrToken($qr_token)
     {
+        $perusahaan = DB::table('perusahaans')->where('qr_token', $qr_token)->first();
+        if (!$perusahaan) abort(404);
+
         $token = 'MORA-' . Str::random(32);
         
         // Simpan token ke cache selama 30 detik untuk toleransi pemindaian
@@ -40,12 +52,20 @@ class PresensiDisplayController extends Controller
     /**
      * API: Ambil data kehadiran hari ini beserta ringkasan statistik
      */
-    public function getTodayAttendance()
+    public function getTodayAttendance($qr_token)
     {
+        $perusahaan = DB::table('perusahaans')->where('qr_token', $qr_token)->first();
+        if (!$perusahaan) abort(404);
+
+        $companyId = $perusahaan->id;
         $today = Carbon::today()->toDateString();
-        $attendances = Presensi::with(['peserta.riwayatLamaran' => function($q) {
-            $q->whereIn('status', ['aktif', 'diterima']);
+        
+        $attendances = Presensi::with(['peserta.riwayatLamaran' => function($q) use ($companyId) {
+            $q->whereIn('status', ['aktif', 'diterima'])->where('perusahaan_id', $companyId);
         }])
+            ->whereHas('peserta.riwayatLamaran', function($q) use ($companyId) {
+                $q->whereIn('status', ['aktif', 'diterima'])->where('perusahaan_id', $companyId);
+            })
             ->whereDate('tanggal', $today)
             ->orderBy('jam_masuk', 'desc')
             ->get()

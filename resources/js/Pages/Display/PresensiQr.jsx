@@ -3,8 +3,8 @@ import { QRCodeSVG } from "qrcode.react";
 import axios from "axios";
 import { Clock, RefreshCw, Users, CheckCircle2, AlertTriangle } from "lucide-react";
 
-export default function PresensiQr() {
-    const [qrToken, setQrToken] = useState("");
+export default function PresensiQr({ qrToken, companyName }) {
+    const [qrString, setQrString] = useState("");
     const [countdown, setCountdown] = useState(20);
     const [attendances, setAttendances] = useState([]);
     const [stats, setStats] = useState({ total_hadir: 0, tepat_waktu: 0, terlambat: 0 });
@@ -19,8 +19,8 @@ export default function PresensiQr() {
     // 2. Fetch QR Token Baru
     const fetchToken = async () => {
         try {
-            const res = await axios.get("/api/qr-token");
-            setQrToken(res.data.token);
+            const res = await axios.get(`/api/qr-token/${qrToken}`);
+            setQrString(res.data.token);
             setCountdown(20);
         } catch (err) {
             console.error("Gagal load QR Token", err);
@@ -30,7 +30,7 @@ export default function PresensiQr() {
     // 3. Fetch Data Kehadiran & Statistik (Live Poll tiap 5 detik)
     const fetchAttendance = async () => {
         try {
-            const res = await axios.get("/api/today-attendance");
+            const res = await axios.get(`/api/today-attendance/${qrToken}`);
             setAttendances(res.data.data);
             if (res.data.meta) {
                 setStats(res.data.meta);
@@ -74,7 +74,7 @@ export default function PresensiQr() {
             <div className="flex flex-col md:flex-row justify-between items-center border-b border-slate-200 pb-5 mb-6 gap-4">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-black text-indigo-950">
-                        MORACADEMY <span className="text-indigo-600 font-normal">| Presensi Harian</span>
+                        {companyName ? companyName : "MORACADEMY"} <span className="text-indigo-600 font-normal">| Presensi Harian</span>
                     </h1>
                     <p className="text-sm text-slate-500 font-medium mt-1">
                         Pindai QR Code menggunakan aplikasi mobile peserta magang.
@@ -202,8 +202,8 @@ export default function PresensiQr() {
                         </p>
 
                         <div className="p-4 bg-white border-2 border-dashed border-indigo-200 rounded-2xl shadow-sm mb-4">
-                            {qrToken ? (
-                                <QRCodeSVG value={qrToken} size={160} level="M" includeMargin={true} />
+                            {qrString ? (
+                                <QRCodeSVG value={qrString} size={160} level="M" includeMargin={true} />
                             ) : (
                                 <div className="w-[160px] h-[160px] flex items-center justify-center text-slate-400 text-xs font-medium">
                                     Loading...
