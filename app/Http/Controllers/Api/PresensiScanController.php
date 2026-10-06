@@ -87,29 +87,6 @@ class PresensiScanController extends Controller
             ], 403);
         }
 
-        // 3. VALIDASI RADIUS AREA KANTOR (Geofencing)
-        // Set koordinat kantor kamu di sini
-        $officeLat = -7.768033;   
-        $officeLng = 110.420059;  
-        $maxRadius = 100; // Jarak maksimal dalam meter
-
-        $distance = $this->getDistanceInMeters(
-            $request->latitude,
-            $request->longitude,
-            $officeLat,
-            $officeLng
-        );
-
-        if ($distance > $maxRadius) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda berada di luar radius kantor! Jarak Anda: ' . round($distance) . ' meter (Maksimal: ' . $maxRadius . ' meter).'
-            ], 422);
-        }
-
-        // 4. LOGIKA ABSEN MASUK & PULANG
-        $today = Carbon::today()->toDateString();
-        
         // Ambil ID perusahaan tempat peserta magang
         $perusahaan_id = $lamaranAktif->perusahaan_id ?? $lamaranAktif->lowongan->perusahaan_id ?? null;
 
@@ -122,6 +99,33 @@ class PresensiScanController extends Controller
                 ], 422);
             }
         }
+
+        // 3. VALIDASI RADIUS AREA KANTOR (Geofencing)
+        $perusahaan = \Illuminate\Support\Facades\DB::table('perusahaans')->where('id', $perusahaan_id)->first();
+
+        if ($perusahaan && $perusahaan->latitude && $perusahaan->longitude) {
+            $officeLat = (float) $perusahaan->latitude;
+            $officeLng = (float) $perusahaan->longitude;
+            $maxRadius = (int) ($perusahaan->radius_absen ?? 50);
+
+            $distance = $this->getDistanceInMeters(
+                $request->latitude,
+                $request->longitude,
+                $officeLat,
+                $officeLng
+            );
+
+            if ($distance > $maxRadius) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda berada di luar radius kantor! Jarak Anda: ' . round($distance) . ' meter (Maksimal: ' . $maxRadius . ' meter).'
+                ], 422);
+            }
+        }
+
+        // 4. LOGIKA ABSEN MASUK & PULANG
+        $today = Carbon::today()->toDateString();
+
 
         // Ambil jadwal default untuk perusahaan tersebut
         if ($perusahaan_id) {
@@ -140,21 +144,32 @@ class PresensiScanController extends Controller
         }
 
         $jamMasukJadwal = substr($jadwal->jam_masuk, 0, 5);
-        $waktuSekarang = now()->format('H:i:s');
-        $waktuSekarangHi = now()->format('H:i');
+        $waktuSekarang = now();
+        $jamMasuk = Carbon::today()->setTimeFromTimeString($jadwal->jam_masuk);
+        
+        // Handle shift yang melewati tengah malam
+        if ($jamMasuk->hour < 12 && $waktuSekarang->hour >= 12) {
+            $jamMasuk->addDay();
+        } elseif ($jamMasuk->hour >= 12 && $waktuSekarang->hour < 12) {
+            $jamMasuk->subDay();
+        }
 
-        // Validasi: Tolak presensi jika terlalu awal (maksimal 2 jam sebelum jam masuk)
-        $waktuBukaAbsen = Carbon::createFromFormat('H:i', $jamMasukJadwal)->subHours(2)->format('H:i');
-        if ($waktuSekarangHi < $waktuBukaAbsen) {
+        // Buka presensi maksimal 2 jam sebelum shift
+        $waktuBukaAbsen = $jamMasuk->copy()->subHours(2);
+
+        // Validasi: Tolak presensi jika terlalu awal
+        if ($waktuSekarang->isBefore($waktuBukaAbsen)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Anda belum bisa melakukan presensi. Presensi untuk shift ini ('.$jamMasukJadwal.') baru dibuka mulai pukul '.$waktuBukaAbsen.'.'
+                'message' => 'Anda belum bisa melakukan presensi. Presensi untuk shift ini ('.$jamMasukJadwal.') baru dibuka mulai pukul '.$waktuBukaAbsen->format('H:i').'.'
             ], 422);
         }
 
+        // Kembalikan variabel ke format string untuk disimpan ke DB
+        $waktuSekarangStr = $waktuSekarang->format('H:i:s');
+
         // Menentukan apakah terlambat atau tidak
-        $batasTerlambat = Carbon::createFromFormat('H:i', $jamMasukJadwal)->format('H:i');
-        $isTerlambat = ($waktuSekarangHi > $batasTerlambat);
+        $isTerlambat = $waktuSekarang->isAfter($jamMasuk);
         $keteranganMasuk = $isTerlambat ? 'Presensi masuk via Mobile Scan (Terlambat)' : 'Presensi masuk via Mobile Scan';
 
         $presensiHariIni = Presensi::where('peserta_id', $peserta->id)
@@ -189,13 +204,13 @@ class PresensiScanController extends Controller
             }
 
             $presensiHariIni->update([
-                'jam_pulang' => $waktuSekarang,
+                'jam_pulang' => $waktuSekarangStr,
                 'keterangan' => $keteranganBaru
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Presensi pulang berhasil dicatat pada ' . $waktuSekarang,
+                'message' => 'Presensi pulang berhasil dicatat pada ' . $waktuSekarangStr,
                 'data'    => $presensiHariIni
             ], 200);
         }
@@ -204,7 +219,7 @@ class PresensiScanController extends Controller
         $presensiBaru = \App\Models\Presensi::create([
             'peserta_id' => $peserta->id,
             'tanggal'    => $today,
-            'jam_masuk'  => $waktuSekarang,
+            'jam_masuk'  => $waktuSekarangStr,
             'status'     => 'hadir', // DB Constraint hanya mengizinkan: hadir, izin, sakit, alpa
             'lokasi'     => $request->latitude . ', ' . $request->longitude,
             'keterangan' => $keteranganMasuk
@@ -212,7 +227,7 @@ class PresensiScanController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Presensi MASUK berhasil dicatat pada pukul ' . $waktuSekarang,
+            'message' => 'Presensi MASUK berhasil dicatat pada pukul ' . $waktuSekarangStr,
             'data'    => $presensiBaru
         ], 200);
     }
