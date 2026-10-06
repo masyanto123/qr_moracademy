@@ -5,6 +5,10 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+Route::get('/', function () {
+    return response('Silakan akses layar QR dari dasbor moracademy melalui tombol Buka Layar QR.', 404);
+});
+
 // 1. HALAMAN UTAMA: Langsung menampilkan layar Monitor QR Presensi (Multi-Tenant via Token)
 Route::get('/display/{qr_token}', [PresensiDisplayController::class, 'index'])->name('display.presensi');
 
