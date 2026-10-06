@@ -49,6 +49,13 @@ class PresensiScanController extends Controller
             ], 422);
         }
 
+        // Ekstrak ID perusahaan dari token (MORA-{id}-{random})
+        $qrCompanyId = null;
+        $parts = explode('-', $request->qr_token);
+        if (count($parts) >= 3) {
+            $qrCompanyId = $parts[1];
+        }
+
         // 2. VALIDASI PESERTA (Status magang harus 'aktif')
         $user = $request->user(); 
         $peserta = $user->peserta;
@@ -104,7 +111,17 @@ class PresensiScanController extends Controller
         $today = Carbon::today()->toDateString();
         
         // Ambil ID perusahaan tempat peserta magang
-        $perusahaan_id = $lamaranAktif->lowongan->perusahaan_id ?? null;
+        $perusahaan_id = $lamaranAktif->perusahaan_id ?? $lamaranAktif->lowongan->perusahaan_id ?? null;
+
+        // Validasi Kepemilikan QR Code
+        if ($qrCompanyId && $perusahaan_id) {
+            if ($qrCompanyId != $perusahaan_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'QR Code ini bukan milik perusahaan tempat Anda magang.'
+                ], 422);
+            }
+        }
 
         // Ambil jadwal default untuk perusahaan tersebut
         if ($perusahaan_id) {
