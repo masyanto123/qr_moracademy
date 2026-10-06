@@ -38,7 +38,7 @@ class PresensiDisplayController extends Controller
         $perusahaan = DB::table('perusahaans')->where('qr_token', $qr_token)->first();
         if (!$perusahaan) abort(404);
 
-        $token = 'MORA-' . Str::random(32);
+        $token = 'MORA-' . $perusahaan->id . '-' . Str::random(24);
         
         // Simpan token ke cache selama 30 detik untuk toleransi pemindaian
         Cache::put('qr_token_' . $token, true, now()->addSeconds(30));
