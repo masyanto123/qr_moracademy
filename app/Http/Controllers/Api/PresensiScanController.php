@@ -121,6 +121,11 @@ class PresensiScanController extends Controller
                     'message' => 'Anda berada di luar radius kantor! Jarak Anda: ' . round($distance) . ' meter (Maksimal: ' . $maxRadius . ' meter).'
                 ], 422);
             }
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lokasi kantor belum diatur oleh pihak perusahaan. Presensi belum dapat dilakukan.'
+            ], 422);
         }
 
         // 4. LOGIKA ABSEN MASUK & PULANG
@@ -146,35 +151,53 @@ class PresensiScanController extends Controller
         $jamMasukJadwal = substr($jadwal->jam_masuk, 0, 5);
         $waktuSekarang = now();
         $jamMasuk = Carbon::today()->setTimeFromTimeString($jadwal->jam_masuk);
+        $jamPulang = Carbon::today()->setTimeFromTimeString($jadwal->jam_pulang);
         
-        // Handle shift yang melewati tengah malam
-        if ($jamMasuk->hour < 12 && $waktuSekarang->hour >= 12) {
-            $jamMasuk->addDay();
-        } elseif ($jamMasuk->hour >= 12 && $waktuSekarang->hour < 12) {
-            $jamMasuk->subDay();
+        // Handle shift yang melewati tengah malam (Shift Malam)
+        $isNightShift = $jamPulang->isBefore($jamMasuk);
+        if ($isNightShift) {
+            if ($waktuSekarang->hour < 12) {
+                // Jika sekarang dini hari, maka shift dimulai kemarin malam
+                $jamMasuk->subDay();
+            } else {
+                // Jika sekarang malam hari, maka shift berakhir besok pagi
+                $jamPulang->addDay();
+            }
         }
 
         // Buka presensi maksimal 2 jam sebelum shift
         $waktuBukaAbsen = $jamMasuk->copy()->subHours(2);
 
-        // Validasi: Tolak presensi jika terlalu awal
-        if ($waktuSekarang->isBefore($waktuBukaAbsen)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda belum bisa melakukan presensi. Presensi untuk shift ini ('.$jamMasukJadwal.') baru dibuka mulai pukul '.$waktuBukaAbsen->format('H:i').'.'
-            ], 422);
+        $presensiHariIni = Presensi::where('peserta_id', $peserta->id)
+            ->whereDate('tanggal', $jamMasuk->toDateString())
+            ->first();
+
+        // Validasi Presensi Masuk (belum pernah absen hari ini)
+        if (!$presensiHariIni) {
+            // Tolak jika terlalu awal
+            if ($waktuSekarang->isBefore($waktuBukaAbsen)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda belum bisa melakukan presensi. Presensi untuk shift ini ('.$jamMasukJadwal.') baru dibuka mulai pukul '.$waktuBukaAbsen->format('H:i').'.'
+                ], 422);
+            }
+
+            // Tolak jika sudah melewati jam pulang
+            if ($waktuSekarang->isAfter($jamPulang)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Waktu presensi masuk telah berakhir karena sudah melewati jam pulang (' . $jamPulang->format('H:i') . ').'
+                ], 422);
+            }
         }
 
         // Kembalikan variabel ke format string untuk disimpan ke DB
         $waktuSekarangStr = $waktuSekarang->format('H:i:s');
+        $shiftDate = $jamMasuk->toDateString();
 
         // Menentukan apakah terlambat atau tidak
         $isTerlambat = $waktuSekarang->isAfter($jamMasuk);
         $keteranganMasuk = $isTerlambat ? 'Presensi masuk via Mobile Scan (Terlambat)' : 'Presensi masuk via Mobile Scan';
-
-        $presensiHariIni = Presensi::where('peserta_id', $peserta->id)
-            ->whereDate('tanggal', $today)
-            ->first();
 
         // SKENARIO A: Peserta sudah pernah absen hari ini
         if ($presensiHariIni) {
@@ -218,7 +241,7 @@ class PresensiScanController extends Controller
         // SKENARIO B: Peserta belum pernah absen hari ini -> Buat data baru (Absen Masuk)
         $presensiBaru = \App\Models\Presensi::create([
             'peserta_id' => $peserta->id,
-            'tanggal'    => $today,
+            'tanggal'    => $shiftDate,
             'jam_masuk'  => $waktuSekarangStr,
             'status'     => 'hadir', // DB Constraint hanya mengizinkan: hadir, izin, sakit, alpa
             'lokasi'     => $request->latitude . ', ' . $request->longitude,
