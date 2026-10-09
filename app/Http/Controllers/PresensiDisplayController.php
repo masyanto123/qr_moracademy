@@ -38,14 +38,27 @@ class PresensiDisplayController extends Controller
         $perusahaan = DB::table('perusahaans')->where('qr_token', $qr_token)->first();
         if (!$perusahaan) abort(404);
 
+        $qrType = $perusahaan->qr_type ?? 'dinamis';
+        $qrTimer = (int) ($perusahaan->qr_timer ?? 30);
+        
+        if ($qrType === 'statis') {
+            // Jika statis, gunakan token yang tidak berubah, tapi tetap mengikuti format MORA-{id}-{...}
+            $token = 'MORA-' . $perusahaan->id . '-' . substr(md5($perusahaan->qr_token), 0, 24);
+            
+            return response()->json([
+                'token' => $token,
+                'expires_in' => 3600 * 24 // 24 jam (seakan-akan tidak expired di view)
+            ]);
+        }
+
         $token = 'MORA-' . $perusahaan->id . '-' . Str::random(24);
         
-        // Simpan token ke cache selama 30 detik untuk toleransi pemindaian
-        Cache::put('qr_token_' . $token, true, now()->addSeconds(30));
+        // Simpan token ke cache selama (timer + toleransi 10 detik) untuk pemindaian
+        Cache::put('qr_token_' . $token, true, now()->addSeconds($qrTimer + 10));
 
         return response()->json([
             'token' => $token,
-            'expires_in' => 20
+            'expires_in' => $qrTimer
         ]);
     }
 

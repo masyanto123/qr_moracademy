@@ -9,6 +9,7 @@ export default function PresensiQr({ qrToken, companyName }) {
     const [attendances, setAttendances] = useState([]);
     const [stats, setStats] = useState({ total_hadir: 0, tepat_waktu: 0, terlambat: 0 });
     const [currentTime, setCurrentTime] = useState(new Date());
+    const timerLimitRef = React.useRef(20);
 
     // 1. Update Jam Digital Setiap Detik
     useEffect(() => {
@@ -21,7 +22,8 @@ export default function PresensiQr({ qrToken, companyName }) {
         try {
             const res = await axios.get(`/api/qr-token/${qrToken}`);
             setQrString(res.data.token);
-            setCountdown(20);
+            timerLimitRef.current = res.data.expires_in;
+            setCountdown(res.data.expires_in);
         } catch (err) {
             console.error("Gagal load QR Token", err);
         }
@@ -48,7 +50,7 @@ export default function PresensiQr({ qrToken, companyName }) {
             setCountdown((prev) => {
                 if (prev <= 1) {
                     fetchToken();
-                    return 20;
+                    return timerLimitRef.current;
                 }
                 return prev - 1;
             });
@@ -211,10 +213,17 @@ export default function PresensiQr({ qrToken, companyName }) {
                             )}
                         </div>
 
-                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-semibold bg-slate-50 px-3 py-1.5 rounded-full">
-                            <RefreshCw className="w-3.5 h-3.5 text-indigo-500 animate-spin" />
-                            <span>Update dalam: <strong className="text-indigo-600 text-xs ml-1">{countdown}s</strong></span>
-                        </div>
+                        {timerLimitRef.current > 3600 ? (
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-semibold bg-slate-50 px-3 py-1.5 rounded-full">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />
+                                <span>QR Code Statis Aktif</span>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-semibold bg-slate-50 px-3 py-1.5 rounded-full">
+                                <RefreshCw className="w-3.5 h-3.5 text-indigo-500 animate-spin" />
+                                <span>Update dalam: <strong className="text-indigo-600 text-xs ml-1">{countdown}s</strong></span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="bg-indigo-900 rounded-3xl p-5 shadow-sm text-white flex-1 relative overflow-hidden flex flex-col justify-center">
