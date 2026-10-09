@@ -41,19 +41,34 @@ class PresensiScanController extends Controller
             'longitude' => 'required|numeric',
         ]);
 
-        // 1. VALIDASI TOKEN QR (Apakah aktif dan belum kedaluwarsa)
-        if (!Cache::has('qr_token_' . $request->qr_token)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'QR Code sudah kedaluwarsa atau tidak valid. Silakan scan ulang.'
-            ], 422);
-        }
-
         // Ekstrak ID perusahaan dari token (MORA-{id}-{random})
         $qrCompanyId = null;
         $parts = explode('-', $request->qr_token);
         if (count($parts) >= 3) {
             $qrCompanyId = $parts[1];
+        }
+
+        // 1. VALIDASI TOKEN QR (Apakah aktif dan belum kedaluwarsa)
+        $isValid = Cache::has('qr_token_' . $request->qr_token);
+
+        if (!$isValid && $qrCompanyId) {
+            $perusahaan = \Illuminate\Support\Facades\DB::table('perusahaans')
+                ->where('id', $qrCompanyId)
+                ->first();
+
+            if ($perusahaan && ($perusahaan->qr_type ?? 'dinamis') === 'statis') {
+                $expectedStaticToken = 'MORA-' . $perusahaan->id . '-' . substr(md5($perusahaan->qr_token), 0, 24);
+                if ($request->qr_token === $expectedStaticToken) {
+                    $isValid = true;
+                }
+            }
+        }
+
+        if (!$isValid) {
+            return response()->json([
+                'success' => false,
+                'message' => 'QR Code sudah kedaluwarsa atau tidak valid. Silakan scan ulang.'
+            ], 422);
         }
 
         // 2. VALIDASI PESERTA (Status magang harus 'aktif')
